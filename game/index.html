@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatGPT Created Games</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body onload="showNotice()">
+
+  <!-- Notice Message -->
+  <div id="notice">
+    <div class="notice-content">
+      <p>Welcome! All these games were created by ChatGPT, including this website. Enjoy playing!</p>
+      <button onclick="closeNotice()">Close</button>
+    </div>
+  </div>
+
+  <header>
+    <h1>ChatGPT Created Games</h1>
+  </header>
+
+  <div class="game-list">
+    <img src="games/game1_preview.png" alt="Game 1" onclick="loadGame('game1')">
+    <img src="games/game2_preview.jpg" alt="Game 2" onclick="loadGame('game2')">
+    <img src="games/game3_preview.jpg" alt="Game 3" onclick="loadGame('game3')">
+  </div>
+
+  <footer>
+    <p>&copy; 2025 Your Game Website</p>
+  </footer>
+
+  <!-- Game Modal (Pop-Up) -->
+  <div id="game-modal">
+    <div class="game-container">
+      <span class="close-button" onclick="closeGame()">×</span>
+      <iframe id="game-frame" width="800" height="600"></iframe>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
