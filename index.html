@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Games Created By ChatGPT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        .game-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .game-item img {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .game-item img:hover {
+            opacity: 0.8;
+        }
+        .popup, .game-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: black;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+        .game-popup {
+            width: 90%;
+            height: 80%;
+            max-width: 1000px;
+            max-height: 800px;
+        }
+        .game-popup iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        .popup button, .game-popup button {
+            margin-top: 10px;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+    </style>
+    <script>
+        function openGame(gameFile) {
+            document.getElementById('gameFrame').src = gameFile;
+            document.getElementById('gamePopup').style.display = 'block';
+        }
+        function closeGamePopup() {
+            document.getElementById('gamePopup').style.display = 'none';
+        }
+        function showPopup() {
+            document.getElementById('welcomePopup').style.display = 'block';
+        }
+        function closePopup() {
+            document.getElementById('welcomePopup').style.display = 'none';
+        }
+        window.onload = showPopup;
+    </script>
+</head>
+<body>
+    <div id="welcomePopup" class="popup">
+        <p>Welcome! All the games on this website (including the website itself) were created by ChatGPT.</p>
+        <button onclick="closePopup()">OK</button>
+    </div>
+    
+    <h1>Games Created By ChatGPT</h1>
+    
+    <div class="game-list">
+        <div class="game-item" onclick="openGame('game1.html')">
+            <img src="game1-thumbnail.png" alt="Game 1">
+        </div>
+        <div class="game-item" onclick="openGame('game2.html')">
+            <img src="game2-thumbnail.png" alt="Game 2">
+        </div>
+        <div class="game-item" onclick="openGame('game3.html')">
+            <img src="game3-thumbnail.png" alt="Game 3">
+        </div>
+    </div>
+    
+    <div id="gamePopup" class="game-popup">
+        <button class="close-btn" onclick="closeGamePopup()">X</button>
+        <iframe id="gameFrame"></iframe>
+    </div>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Tetris Game</title>
+    <style>
+        body {
+            background-color: #2e3a59;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 90vh;
+            margin: 0;
+            overflow: hidden; /* Prevent scrollbars */
+            flex-direction: column;
+        }
+        canvas {
+            border: 4px solid #ff69b4;
+            border-radius: 10px;
+            background: #111;
+        }
+        #scoreboard {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #gameOverPopup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            display: none;
+        }
+        .game-over-text {
+            font-size: 30px;
+            margin-bottom: 20px;
+        }
+        .final-score {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .time-spent {
+            font-size: 20px;
+        }
+        .close-btn {
+            background-color: #ff69b4;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        .close-btn:hover {
+            background-color: #ff4c87;
+        }
+        #instructionsPopup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            display: block;
+        }
+        #instructionsPopup h2 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        #instructionsPopup p {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        #instructionsPopup .close-btn {
+            background-color: #ff69b4;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+        #instructionsPopup .close-btn:hover {
+            background-color: #ff4c87;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+    <div id="scoreboard">Score: 0</div>
+    <div id="gameOverPopup">
+        <div class="game-over-text">Game Over!</div>
+        <div class="final-score">Final Score: 0</div>
+        <div class="time-spent">Time Spent: 0s</div>
+        <button class="close-btn" onclick="closeGame()">Close</button>
+    </div>
+    <div id="instructionsPopup">
+        <h2>How to Play</h2>
+        <p>Use the arrow keys to control the falling pieces:</p>
+        <p><strong>Left Arrow:</strong> Move the piece left</p>
+        <p><strong>Right Arrow:</strong> Move the piece right</p>
+        <p><strong>Down Arrow:</strong> Speed up the piece</p>
+        <p><strong>Up Arrow:</strong> Rotate the piece clockwise</p>
+        <p>Try to complete full lines to score points!</p>
+        <button class="close-btn" onclick="closeInstructions()">Close Instructions</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("tetrisCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreboard = document.getElementById("scoreboard");
+        const gameOverPopup = document.getElementById("gameOverPopup");
+        const instructionsPopup = document.getElementById("instructionsPopup");
+
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 30;
+        const colors = ['#FF5733', '#33FF57', '#5733FF', '#FF33A6', '#33A6FF', '#A633FF', '#FF8C33'];
+
+        const tetrominoes = [
+            [[1, 1, 1, 1]], // I
+            [[1, 1, 1], [0, 0, 1]], // J
+            [[1, 1, 1], [1, 0, 0]], // L
+            [[1, 1], [1, 1]], // O
+            [[1, 1, 0], [0, 1, 1]], // S
+            [[0, 1, 1], [1, 1, 0]], // Z
+            [[1, 1], [0, 1], [0, 1]] // T
+        ];
+
+        let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        let currentTetromino, currentPos, score = 0, startTime, gameInterval;
+        let gameSpeed = 500; // Initial speed of piece falling
+        let gameRunning = false;
+
+        function randomTetromino() {
+            const rand = Math.floor(Math.random() * tetrominoes.length);
+            return {
+                shape: tetrominoes[rand],
+                color: colors[rand]
+            };
+        }
+
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if (board[row][col] !== 0) {
+                        ctx.fillStyle = board[row][col];
+                        ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                }
+            }
+        }
+
+        function drawTetromino() {
+            const { shape, color } = currentTetromino;
+            for (let row = 0; row < shape.length; row++) {
+                for (let col = 0; col < shape[row].length; col++) {
+                    if (shape[row][col] === 1) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect((currentPos.x + col) * BLOCK_SIZE, (currentPos.y + row) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+                    }
+                }
+            }
+        }
+
+        function placeTetromino() {
+            const { shape, color } = currentTetromino;
+            for (let row = 0; row < shape.length; row++) {
+                for (let col = 0; col < shape[row].length; col++) {
+                    if (shape[row][col] === 1) {
+                        if (currentPos.y + row < 0) return endGame();  // Game over condition
+                        board[currentPos.y + row][currentPos.x + col] = color;
+                    }
+                }
+            }
+            removeFullLines();
+            currentTetromino = randomTetromino();
+            currentPos = { x: Math.floor(COLS / 2) - 1, y: 0 };
+            if (isColliding()) return endGame();  // Game over check after new piece spawns
+        }
+
+        function removeFullLines() {
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (board[row].every(cell => cell !== 0)) {
+                    board.splice(row, 1);
+                    board.unshift(Array(COLS).fill(0));
+                    score += 100; // Points for clearing a line
+                    updateScore();
+                }
+            }
+        }
+
+        function updateScore() {
+            scoreboard.innerText = `Score: ${score}`;
+        }
+
+        function startGame() {
+            gameRunning = true;
+            currentTetromino = randomTetromino();
+            currentPos = { x: Math.floor(COLS / 2) - 1, y: 0 };
+            startTime = Date.now();
+            gameInterval = setInterval(gameLoop, gameSpeed); // Set interval for game loop
+        }
+
+        function gameLoop() {
+            if (gameRunning) {
+                if (!moveTetromino(0, 1)) {
+                    placeTetromino();
+                }
+                drawBoard();
+                drawTetromino();
+            }
+        }
+
+        function moveTetromino(dx, dy) {
+            currentPos.x += dx;
+            currentPos.y += dy;
+            if (isColliding()) {
+                currentPos.x -= dx;
+                currentPos.y -= dy;
+                return false;
+            }
+            return true;
+        }
+
+        function rotateTetromino() {
+            const newShape = rotateShape(currentTetromino.shape);
+            const tempShape = currentTetromino.shape;
+            const tempPos = { ...currentPos };
+
+            currentTetromino.shape = newShape;
+            if (isColliding()) {
+                currentTetromino.shape = tempShape;
+                currentPos = tempPos;
+            }
+        }
+
+        function rotateShape(shape) {
+            const newShape = shape[0].map((_, index) => shape.map(row => row[index])).reverse();
+            return newShape;
+        }
+
+        function isColliding() {
+            const { shape } = currentTetromino;
+            for (let row = 0; row < shape.length; row++) {
+                for (let col = 0; col < shape[row].length; col++) {
+                    if (shape[row][col] === 1) {
+                        const newX = currentPos.x + col;
+                        const newY = currentPos.y + row;
+                        if (newX < 0 || newX >= COLS || newY >= ROWS || board[newY][newX] !== 0) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            const timeSpent = Math.floor((Date.now() - startTime) / 1000);
+            gameOverPopup.querySelector(".final-score").innerText = `Final Score: ${score}`;
+            gameOverPopup.querySelector(".time-spent").innerText = `Time Spent: ${timeSpent}s`;
+            gameOverPopup.style.display = "block";
+        }
+
+        function closeGame() {
+            gameOverPopup.style.display = "none";
+            board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            score = 0;
+            updateScore();
+            startGame(); // Start the game after closing the popup
+        }
+
+        function showInstructions() {
+            instructionsPopup.style.display = "block";
+        }
+
+        function closeInstructions() {
+            instructionsPopup.style.display = "none";
+            startGame();  // Start the game when instructions are closed
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') moveTetromino(-1, 0);
+            if (e.key === 'ArrowRight') moveTetromino(1, 0);
+            if (e.key === 'ArrowDown') moveTetromino(0, 1);
+            if (e.key === 'ArrowUp') rotateTetromino();  // Rotate 90 degrees clockwise
+            drawBoard();
+            drawTetromino();
+        });
+
+        showInstructions(); // Show the instructions when the page loads
+    </script>
+</body>
+</html>
